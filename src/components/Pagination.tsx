@@ -12,12 +12,12 @@ const Pagination: React.FC<PaginationProps> = ({
         variant="outline"
         disabled={currentPage === 1}
         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-        className="w-12 h-12 flex items-center justify-center rounded-full border border-gray-300 bg-white shadow-md hover:border-purple-600 hover:bg-purple-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-8 h-8 flex items-center rounded-sm justify-center  border border-gray-300 bg-white shadow-md hover:border-purple-600 hover:bg-purple-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ChevronLeft className="w-6 h-6 text-gray-600" />
       </Button>
 
-      <span className="text-lg font-semibold text-gray-800 px-6 py-2 rounded-full bg-gradient-to-r from-purple-200 to-purple-400 shadow-md">
+      <span className="text-sm font-semibold rounded-sm text-white px-6 py-2  bg-gray-900 shadow-md h-8">
         Page {currentPage} of {totalPages}
       </span>
 
@@ -25,7 +25,7 @@ const Pagination: React.FC<PaginationProps> = ({
         variant="outline"
         disabled={currentPage >= totalPages}
         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-        className="w-12 h-12 flex items-center justify-center rounded-full border border-gray-300 bg-white shadow-md hover:border-purple-600 hover:bg-purple-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-8 h-8 flex items-center rounded-sm justify-center border border-gray-300 bg-white shadow-md hover:border-purple-600 hover:bg-purple-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ChevronRight className="w-6 h-6 text-gray-600" />
       </Button>
