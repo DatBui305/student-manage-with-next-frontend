@@ -55,10 +55,18 @@ import {
 } from "@/components/ui/select";
 import { Gender } from "@/types/gender";
 import { toast } from "sonner";
+import Teacher from "@/interfaces/Teacher";
+import {
+  createTeacher,
+  deleteTeacher,
+  getTeacherById,
+  getTeachers,
+  updateTeacher,
+} from "@/apis/teacherService";
 
-const StudentDashboard = () => {
+const TeacherDashboard = () => {
   const [mounted, setMounted] = useState(false);
-  const [students, setStudents] = useState<Student[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -68,35 +76,27 @@ const StudentDashboard = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [gender, setGender] = useState("");
-  const [dob, setDob] = useState("");
-  const [classId, setClassId] = useState("");
 
   const [idUpdate, setIdUpdate] = useState(1);
   const [nameUpdate, setNameUpdate] = useState("");
   const [emailUpdate, setEmailUpdate] = useState("");
   const [phoneUpdate, setPhoneUpdate] = useState("");
-  const [addressUpdate, setAddressUpdate] = useState("");
-  const [genderUpdate, setGenderUpdate] = useState("");
-  const [dobUpdate, setDobUpdate] = useState("");
-  const [classIdUpdate, setClassIdUpdate] = useState(1);
 
   const [isDisplayCreate, setIsDisplayCreate] = useState(false);
   const [isDisplayUpdate, setIsDisplayUpdate] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState(1);
-  const [searchStudent, setSearchStudent] = useState<Student>();
+  const [searchTeacher, setSearchTeacher] = useState<Teacher>();
   useEffect(() => {
     setMounted(true);
 
-    fetchStudents();
+    fetchTeachers();
   }, [currentPage]);
-  const fetchStudents = async () => {
+  const fetchTeachers = async () => {
     try {
-      const response = await getStudents(currentPage, itemsPerPage);
+      const response = await getTeachers(currentPage, itemsPerPage);
       console.log(response.data);
-      setStudents(response.data || []);
+      setTeachers(response.data || []);
       setTotal(response.total || 0);
       setTotalPages(Math.ceil(response.total / itemsPerPage));
     } catch (error) {
@@ -105,91 +105,70 @@ const StudentDashboard = () => {
       setLoading(false);
     }
   };
-
-  const createNewStudent = async () => {
+  const createNewTeacher = async () => {
     try {
-      const studentData = {
+      const teacherData = {
         full_name: name,
-        date_of_birth: dob,
-        gender: gender,
-        class_id: classId,
         phone: phone,
         email: email,
-        address: address,
       };
 
-      const response = await createStudent(studentData); // Gọi hàm createStudent
-      console.log("Student created successfully:", response);
-      setStudents((prev) => [...prev, response]);
+      const response = await createTeacher(teacherData); // Gọi hàm createStudent
+      console.log("Teacher created successfully:", response);
+      setTeachers((prev) => [...prev, response]);
       setIsDisplayCreate(false);
-      createNewStudent(); // Gọi hàm tạo sinh viên
+      createNewTeacher();
       clearInput();
     } catch (error) {
-      console.error("Error creating student:", error);
+      console.error("Error creating Teacher:", error);
     }
   };
-
   const clearInput = () => {
     setName(""); // Xóa trường tên
     setEmail(""); // Xóa trường email
     setPhone(""); // Xóa trường điện thoại
-    setAddress(""); // Xóa trường địa chỉ
-    setDob(""); // Xóa trường ngày sinh
-    setGender(""); // Xóa trường giới tính
-    setClassId(""); // Xóa trường ID lớp
   };
+
   const clearInputUpdate = () => {
     setNameUpdate(""); // Xóa trường tên
     setEmailUpdate(""); // Xóa trường email
     setPhoneUpdate(""); // Xóa trường điện thoại
-    setAddressUpdate(""); // Xóa trường địa chỉ
-    setDobUpdate(""); // Xóa trường ngày sinh
-    setGenderUpdate(""); // Xóa trường giới tính
-    setClassIdUpdate(1); // Xóa trường ID lớp
   };
-  const updateExistStudent = async () => {
+  const updateExistTeacher = async () => {
     try {
       const updateData = {
         full_name: nameUpdate,
-        date_of_birth: dobUpdate,
-        gender: genderUpdate,
-        class_id: classIdUpdate,
         phone: phoneUpdate,
         email: emailUpdate,
-        address: addressUpdate,
       };
-      const response = await updateStudent(idUpdate, updateData);
+      const response = await updateTeacher(idUpdate, updateData);
       console.log("Student updated successfully:", response);
-      fetchStudents(); // Cập nhật danh sách sinh viên
+      fetchTeachers(); // Cập nhật danh sách sinh viên
       clearInputUpdate();
       setIsDisplayUpdate(false); // Đóng form cập nhật
     } catch (error) {
       console.error("Error updating student:", error);
     }
   };
-  const handleUpdate = async (student: Student) => {
-    console.log(student);
+  const handleUpdate = async (teacher: Teacher) => {
+    console.log(teacher);
     // Cập nhật các trường thông tin
-    setIdUpdate(student.id);
-    setEmailUpdate(student.email);
-    setNameUpdate(student.full_name);
-    setPhoneUpdate(student.phone);
-    setAddressUpdate(student.address);
-    setDobUpdate(student.date_of_birth);
-    setGenderUpdate(student.gender);
-    setClassIdUpdate(student.class_id);
+    setIdUpdate(teacher.id);
+    setEmailUpdate(teacher.email);
+    setNameUpdate(teacher.full_name);
+    setPhoneUpdate(teacher.phone);
     setIsDisplayUpdate(!isDisplayUpdate); // Hiển thị form cập nhật
   };
-  const handleDelete = (student: Student) => {
-    console.log(student);
-    toast.warning(`Are you sure you want to delete ${student.full_name}?`, {
+  const handleDelete = (teacher: Teacher) => {
+    console.log(teacher);
+    toast.warning(`Are you sure you want to delete ${teacher.full_name}?`, {
       action: {
         label: "Delete",
         onClick: async () => {
           try {
-            await deleteStudent(student.id); // Call API to delete student
-            toast.success("✅ Student deleted successfully!");
-            fetchStudents(); // Refresh student list
+            await deleteTeacher(teacher.id); // Call API to delete student
+            toast.success("✅ Teacher deleted successfully!");
+            fetchTeachers(); // Refresh student list
           } catch (error) {
             toast.error("❌ Failed to delete student!");
             console.error("Error deleting student:", error);
@@ -198,6 +177,28 @@ const StudentDashboard = () => {
       },
     });
   };
+  const handleSearch = async () => {
+    try {
+      const id = Number(searchTerm);
+      console.log(id);
+      const response = await getTeacherById(id);
+
+      if (response) {
+        setSearchTeacher(response);
+        console.log("Fetched teacher:", response); // In ra dữ liệu sinh viên đã nhận được
+        setTotal(1); // Cập nhật tổng số sinh viên tìm thấy
+      } else {
+        console.log("No student found with this ID.");
+        setSearchTeacher(undefined); // Đặt lại searchStudent nếu không tìm thấy
+        setTotal(0); // Cập nhật tổng số sinh viên tìm thấy
+      }
+    } catch (error) {
+      console.error("Error fetching student:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!mounted) return null;
   if (loading)
     return (
@@ -207,27 +208,6 @@ const StudentDashboard = () => {
       </div>
     );
 
-  const handleSearch = async () => {
-    try {
-      const id = Number(searchTerm);
-      console.log(id);
-      const response = await getStudentById(id);
-
-      if (response) {
-        setSearchStudent(response);
-        console.log("Fetched student:", response); // In ra dữ liệu sinh viên đã nhận được
-        setTotal(1); // Cập nhật tổng số sinh viên tìm thấy
-      } else {
-        console.log("No student found with this ID.");
-        setSearchStudent(undefined); // Đặt lại searchStudent nếu không tìm thấy
-        setTotal(0); // Cập nhật tổng số sinh viên tìm thấy
-      }
-    } catch (error) {
-      console.error("Error fetching student:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
   return (
     <div>
       <motion.div
@@ -258,6 +238,8 @@ const StudentDashboard = () => {
             </div>
           </div>
 
+          {/*  */}
+
           {isDisplayCreate ? (
             <div className="grid gap-5 px-6 py-3">
               <Input
@@ -278,41 +260,10 @@ const StudentDashboard = () => {
                 onChange={(e) => setPhone(e.target.value)}
                 value={phone}
               ></Input>
-              <Input
-                placeholder="Address"
-                className="shadow-md hover:shadow-lg transition-shadow"
-                onChange={(e) => setAddress(e.target.value)}
-                value={address}
-              ></Input>
-              <Input
-                type="date"
-                placeholder="Date of Birth"
-                className="shadow-md hover:shadow-lg transition-shadow"
-                onChange={(e) => setDob(e.target.value)}
-                value={dob}
-              ></Input>
-              <Select
-                onValueChange={(value) => setGender(value as Gender)}
-                defaultValue={gender}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Class ID"
-                type="number"
-                className="shadow-md hover:shadow-lg transition-shadow"
-                onChange={(e) => setClassId(e.target.value)}
-                value={classId}
-              ></Input>
+
               <Button
                 className="shadow-md hover:shadow-lg transition-shadow"
-                onClick={createNewStudent}
+                onClick={createNewTeacher}
               >
                 Create
               </Button>
@@ -320,6 +271,8 @@ const StudentDashboard = () => {
           ) : (
             <></>
           )}
+
+          {/*  */}
           {isDisplayUpdate ? (
             <div className="grid gap-5 px-6 py-3">
               <Input
@@ -340,41 +293,9 @@ const StudentDashboard = () => {
                 onChange={(e) => setPhoneUpdate(e.target.value)}
                 value={phoneUpdate}
               ></Input>
-              <Input
-                placeholder="Address"
-                className="shadow-md hover:shadow-lg transition-shadow"
-                onChange={(e) => setAddressUpdate(e.target.value)}
-                value={addressUpdate}
-              ></Input>
-              <Input
-                type="date"
-                placeholder="Date of Birth"
-                className="shadow-md hover:shadow-lg transition-shadow"
-                onChange={(e) => setDobUpdate(e.target.value)}
-                value={dobUpdate}
-              ></Input>
-              <Select
-                onValueChange={(value) => setGenderUpdate(value as Gender)}
-                defaultValue={genderUpdate}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Class ID"
-                type="number"
-                className="shadow-md hover:shadow-lg transition-shadow"
-                onChange={(e) => setClassIdUpdate(parseInt(e.target.value))}
-                value={classIdUpdate}
-              ></Input>
               <Button
                 className="shadow-md hover:shadow-lg transition-shadow"
-                onClick={() => updateExistStudent()}
+                onClick={() => updateExistTeacher()}
               >
                 Update
               </Button>
@@ -385,68 +306,68 @@ const StudentDashboard = () => {
 
           {/*  */}
           <div className="px-6">
-            {searchStudent ? (
+            {searchTeacher ? (
               <Table className="px-6">
                 <TableHeader>
-                  <TableRow className="grid grid-cols-[1fr_2fr_2fr_2fr_2fr_2fr_1fr_50px] bg-gray-100 px-4">
+                  <TableRow className="grid grid-cols-[1fr_2fr_3fr_2fr_1fr] bg-gray-100 px-4">
                     <TableHead className="flex items-center ">Id</TableHead>
                     <TableHead className="flex items-center ">Name</TableHead>
                     <TableHead className="flex items-center "> Email</TableHead>
                     <TableHead className="flex items-center ">Phone</TableHead>
-                    <TableHead className="flex items-center ">
-                      Address
-                    </TableHead>
-                    <TableHead className="flex items-center ">
-                      Date of Birth
-                    </TableHead>
-                    <TableHead className="flex items-center ">
-                      Class ID
-                    </TableHead>
-                    {/* <TableHead className="w-[50px] text-center flex items-center">
+                    <TableHead className="w-[50px] text-center flex items-center">
                       Actions
-                    </TableHead> */}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow
-                    key={searchStudent.id}
-                    className="grid grid-cols-[1fr_2fr_2fr_2fr_2fr_2fr_1fr_50px] items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
+                    key={searchTeacher.id}
+                    className="grid grid-cols-[1fr_2fr_3fr_2fr_1fr] items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
                   >
                     <TableCell className="flex items-center gap-2">
                       <IdCard className="h-4 w-4 text-blue-500" />
-                      {searchStudent.id}
+                      {searchTeacher.id}
                     </TableCell>
                     <TableCell className="flex items-center gap-2">
                       <Avatar className="h-8 w-8 hover:shadow-md transition-shadow">
                         <AvatarFallback className="bg-purple-100 text-purple-600">
-                          {searchStudent.full_name.charAt(0)}
+                          {searchTeacher.full_name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      {searchStudent.full_name}
+                      {searchTeacher.full_name}
                     </TableCell>
                     <TableCell className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-blue-500" />
-                      {searchStudent.email}
+                      {searchTeacher.email}
                     </TableCell>
                     <TableCell className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-green-500" />
-                      {searchStudent.phone}
+                      {searchTeacher.phone}
                     </TableCell>
-                    <TableCell className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-red-500" />
-                      {searchStudent.address}
-                    </TableCell>
-                    <TableCell className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-purple-500" />
-                      {searchStudent.date_of_birth}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className="bg-purple-50 hover:bg-purple-100 transition-colors"
-                      >
-                        Class {searchStudent.class_id}
-                      </Badge>
+                    <TableCell className="w-[50px] flex justify-center">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="p-1">
+                            <MoreVerticalIcon className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleUpdate(searchTeacher)}
+                            className="flex flex-row"
+                          >
+                            <Edit className="h-4 w-4 mr-2 text-blue-500" />
+                            Update
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(searchTeacher)}
+                            className="flex flex-row"
+                          >
+                            <Trash className="h-4 w-4 mr-2 text-red-500" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                     {/* Nút Actions */}
                   </TableRow>
@@ -460,19 +381,17 @@ const StudentDashboard = () => {
               </TableRow>
             )}
           </div>
-
           {/*  */}
-
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-xl font-semibold text-gray-800 ">
-              Students List
+              Teacher List
             </CardTitle>
 
             <Badge
               variant="secondary"
               className="h-8 px-3 bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
             >
-              Total: {students.length}
+              Total: {teachers.length}
             </Badge>
           </CardHeader>
 
@@ -480,68 +399,44 @@ const StudentDashboard = () => {
             <div className="rounded-lg border bg-white shadow-sm">
               <Table>
                 <TableHeader>
-                  <TableRow className="grid grid-cols-[1fr_2fr_2fr_2fr_2fr_2fr_1fr_50px] bg-gray-100 px-4">
+                  <TableRow className="grid grid-cols-[1fr_2fr_3fr_2fr_1fr] bg-gray-100 px-4">
                     <TableHead className="flex items-center ">Id</TableHead>
                     <TableHead className="flex items-center ">Name</TableHead>
                     <TableHead className="flex items-center "> Email</TableHead>
                     <TableHead className="flex items-center ">Phone</TableHead>
-                    <TableHead className="flex items-center ">
-                      Address
-                    </TableHead>
-                    <TableHead className="flex items-center ">
-                      Date of Birth
-                    </TableHead>
-                    <TableHead className="flex items-center ">
-                      Class ID
-                    </TableHead>
                     <TableHead className="w-[50px] text-center flex items-center">
                       Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.length > 0 ? (
-                    students.map((student) => (
+                  {teachers.length > 0 ? (
+                    teachers.map((teacher) => (
                       <TableRow
-                        key={student.id}
-                        className="grid grid-cols-[1fr_2fr_2fr_2fr_2fr_2fr_1fr_50px] items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
+                        key={teacher.id}
+                        className="grid grid-cols-[1fr_2fr_3fr_2fr_1fr] items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
                       >
                         <TableCell className="flex items-center gap-2">
                           <IdCard className="h-4 w-4 text-blue-500" />
-                          {student.id}
+                          {teacher.id}
                         </TableCell>
                         <TableCell className="flex items-center gap-2">
                           <Avatar className="h-8 w-8 hover:shadow-md transition-shadow">
                             <AvatarFallback className="bg-purple-100 text-purple-600">
-                              {student.full_name.charAt(0)}
+                              {teacher.full_name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          {student.full_name}
+                          {teacher.full_name}
                         </TableCell>
                         <TableCell className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-blue-500" />
-                          {student.email}
+                          {teacher.email}
                         </TableCell>
                         <TableCell className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-green-500" />
-                          {student.phone}
+                          {teacher.phone}
                         </TableCell>
-                        <TableCell className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-red-500" />
-                          {student.address}
-                        </TableCell>
-                        <TableCell className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-purple-500" />
-                          {student.date_of_birth}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className="bg-purple-50 hover:bg-purple-100 transition-colors"
-                          >
-                            Class {student.class_id}
-                          </Badge>
-                        </TableCell>
+
                         {/* Nút Actions */}
                         <TableCell className="w-[50px] flex justify-center">
                           <DropdownMenu>
@@ -556,14 +451,14 @@ const StudentDashboard = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => handleUpdate(student)}
+                                onClick={() => handleUpdate(teacher)}
                                 className="flex flex-row"
                               >
                                 <Edit className="h-4 w-4 mr-2 text-blue-500" />
                                 Update
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleDelete(student)}
+                                onClick={() => handleDelete(teacher)}
                                 className="flex flex-row"
                               >
                                 <Trash className="h-4 w-4 mr-2 text-red-500" />
@@ -577,7 +472,7 @@ const StudentDashboard = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center">
-                        No students found
+                        No teachers found
                       </TableCell>
                     </TableRow>
                   )}
@@ -596,4 +491,4 @@ const StudentDashboard = () => {
   );
 };
 
-export default StudentDashboard;
+export default TeacherDashboard;

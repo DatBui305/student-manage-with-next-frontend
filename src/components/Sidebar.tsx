@@ -8,6 +8,8 @@ import {
   DollarSign,
   Utensils,
   Settings,
+  Book,
+  ClipboardList,
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -27,15 +29,9 @@ const Sidebar = () => {
           <Grid className="mr-2" />
           <span>Dashboard</span>
         </Link>
+
         <Link
-          href="/chat"
-          className="flex items-center p-2 rounded-lg hover:bg-purple-600 transition-colors"
-        >
-          <MessageCircle className="mr-2" />
-          <span>Chat</span>
-        </Link>
-        <Link
-          href="/students"
+          href="/student"
           className="flex items-center p-2 rounded-lg hover:bg-purple-600 transition-colors"
         >
           <Users className="mr-2" />
@@ -45,38 +41,40 @@ const Sidebar = () => {
           </span>
         </Link>
         <Link
-          href="/teachers"
+          href="/teacher"
           className="flex items-center p-2 rounded-lg hover:bg-purple-600 transition-colors"
         >
           <User className="mr-2" />
           <span>Teacher</span>
         </Link>
         <Link
-          href="/events"
+          href="/class"
           className="flex items-center p-2 rounded-lg bg-purple-600"
         >
-          <Calendar className="mr-2" />
-          <span>Event</span>
+          <Book className="mr-2" />
+          <span>Class</span>
         </Link>
+
+        <Link href="/subject" className="flex items-center p-2 rounded-lg">
+          <ClipboardList className="mr-2" />
+          <span>Subject</span>
+        </Link>
+
+        <Link href="/enrollment" className="flex items-center p-2 rounded-lg">
+          <Users className="mr-2" />
+          <span>Enrollment</span>
+        </Link>
+
         <div className="mt-4">
           <h2 className="text-lg font-semibold">Others</h2>
         </div>
+
         <Link
-          href="/finance"
+          href="/chat"
           className="flex items-center p-2 rounded-lg hover:bg-purple-600 transition-colors"
         >
-          <DollarSign className="mr-2" />
-          <span>Finance</span>
-        </Link>
-        <Link
-          href="/food"
-          className="flex items-center p-2 rounded-lg hover:bg-purple-600 transition-colors"
-        >
-          <Utensils className="mr-2" />
-          <span>Food</span>
-          <span className="ml-auto bg-purple-500 rounded-full px-2 text-xs">
-            1
-          </span>
+          <MessageCircle className="mr-2" />
+          <span>Chat</span>
         </Link>
         <Link
           href="/settings"
