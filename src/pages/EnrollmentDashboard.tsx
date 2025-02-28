@@ -62,127 +62,159 @@ import {
   updateClass,
 } from "@/apis/classService";
 import Class from "@/interfaces/Class";
+import Subject from "@/interfaces/Subject";
+import {
+  createSubject,
+  deleteSubject,
+  getSubjectById,
+  getSubjects,
+  updateSubject,
+} from "@/apis/subjectService";
+import Enrollment from "@/interfaces/Enrollment";
+import {
+  createEnrollment,
+  deleteEnrollment,
+  getEnrollmentById,
+  getEnrollments,
+  updateEnrollment,
+} from "@/apis/enrollmentService";
 
-const ClassDashboard = () => {
+const EnrollmentDashboard = () => {
   const [mounted, setMounted] = useState(false);
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(1);
   const itemsPerPage = 10;
 
-  const [className, setClassName] = useState("");
-  const [teacherID, setTeacherID] = useState(0);
+  const [studentID, setStudentID] = useState<number>(0);
+  const [subjectID, setSubjectID] = useState<number>(0);
+  const [enrollmentDate, setEnrollmentDate] = useState<Date>(new Date());
 
-  const [idUpdate, setIdUpdate] = useState(1);
-  const [classNameUpdate, setClassNameUpdate] = useState("");
-  const [teacherIDUpdate, setteacherIDUpdate] = useState(0);
+  const [idUpdate, setIdUpdate] = useState(0);
+  const [studentIDUpdate, setStudentIDUpdate] = useState<number>(0);
+  const [subjectIDUpdate, setSubjectIDUpdate] = useState<number>(0);
+  const [enrollmentDateUpdate, setEnrollmentDateUpdate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
 
   const [isDisplayCreate, setIsDisplayCreate] = useState(false);
   const [isDisplayUpdate, setIsDisplayUpdate] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState(1);
-  const [searchClass, setSearchClass] = useState<Class>();
+  const [searchEnrollment, setSearchEnrollment] = useState<Enrollment>();
   useEffect(() => {
     setMounted(true);
 
-    fetchClasses();
+    fetchEnrollments();
   }, [currentPage]);
-  const fetchClasses = async () => {
+
+  const fetchEnrollments = async () => {
     try {
-      const response = await getClasses(currentPage, itemsPerPage);
-      console.log(response.data);
-      setClasses(response.data || []);
+      const response = await getEnrollments(currentPage, itemsPerPage);
+      // Validate and transform data if needed
+      const validatedEnrollments = response.data.map(
+        (enrollment: { student: any; subject: any }) => ({
+          ...enrollment,
+          student: enrollment.student || { full_name: "No Student" },
+          subject: enrollment.subject || { subject_name: "No Subject" },
+        })
+      );
+      setEnrollments(validatedEnrollments);
       setTotal(response.total || 0);
       setTotalPages(Math.ceil(response.total / itemsPerPage));
     } catch (error) {
-      console.error("Error fetching students:", error);
+      console.error("Error fetching enrollments:", error);
+      toast.error("Failed to fetch enrollments");
     } finally {
       setLoading(false);
     }
   };
-  const createNewClass = async () => {
-    try {
-      // Validate input
-      if (!className.trim()) {
-        toast.error("Class name cannot be empty");
-        return;
-      }
 
-      const classData = {
-        class_name: className,
-        teacher: {
-          id: teacherID,
+  const createNewEnrollment = async () => {
+    try {
+      const enrollmentData = {
+        student: {
+          id: studentID, // Thêm studentID state
         },
+        subject: {
+          id: subjectID, // Thêm subjectID state
+        },
+        enrollment_date: enrollmentDateUpdate, // Hoặc dùng enrollmentDate từ form
       };
 
-      const response = await createClass(classData);
-      console.log("Class created successfully:", response);
-      toast.success("Class created successfully!");
-      setClasses((prev) => [...prev, response]);
+      const response = await createEnrollment(enrollmentData); // Đổi tên hàm API call
+      console.log("Enrollment created successfully:", response);
+      toast.success("Enrollment created successfully!");
+      setEnrollments((prev) => [...prev, response]); // Đổi tên state
       setIsDisplayCreate(false);
-      fetchClasses(); // Refresh the list
+      fetchEnrollments(); // Đổi tên hàm fetch
       clearInput();
     } catch (error: any) {
-      console.error("Error creating class:", error);
-      // Check if it's a duplicate class name error
-      if (
-        error.response?.status === 500 &&
-        error.response?.data?.message?.includes("duplicate key value")
-      ) {
-        toast.error("A class with this name already exists");
+      console.error("Error creating enrollment:", error);
+      if (error.response?.status === 500) {
+        toast.error("Failed to create enrollment. Please check your input.");
       } else {
-        toast.error("Failed to create class. Please try again.");
+        toast.error("Failed to create enrollment. Please try again.");
       }
     }
   };
-  const updateExistClasss = async () => {
+  const updateExistEnrollment = async () => {
     try {
       const updateData = {
-        class_name: classNameUpdate,
-        teacher: {
-          id: teacherIDUpdate,
+        student: {
+          id: studentIDUpdate,
         },
+        subject: {
+          id: subjectIDUpdate,
+        },
+        enrollment_date: new Date(enrollmentDateUpdate).toISOString(),
       };
-      const response = await updateClass(idUpdate, updateData);
-      console.log("Class updated successfully:", response);
-      fetchClasses();
+
+      const response = await updateEnrollment(idUpdate, updateData);
+      console.log("Enrollment updated successfully:", response);
+      fetchEnrollments();
       clearInputUpdate();
       setIsDisplayUpdate(false);
+      toast.success("Enrollment updated successfully!");
     } catch (error) {
-      console.error("Error updating class:", error);
+      console.error("Error updating enrollment:", error);
+      toast.error("Failed to update enrollment");
     }
   };
-  const clearInput = () => {
-    setClassName(""); // Xóa trường tên
-    setTeacherID(0); // Xóa trường email
-  };
   const clearInputUpdate = () => {
-    setClassNameUpdate(""); // Xóa trường tên
-    setteacherIDUpdate(0); // Xóa trường email
+    setEnrollmentDateUpdate(new Date().toISOString().split("T")[0]);
+    setStudentIDUpdate(0);
+    setSubjectIDUpdate(0);
   };
 
-  const handleUpdate = async (classs: Class) => {
-    console.log(classs);
-    setIdUpdate(classs.id);
-    setClassNameUpdate(classs.class_name);
-    setteacherIDUpdate(classs.teacher ? classs.teacher.id : 0);
-    setIsDisplayUpdate(!isDisplayUpdate);
+  const handleUpdate = (enrollment: Enrollment) => {
+    setIdUpdate(enrollment.id);
+    setStudentIDUpdate(enrollment.student?.id || 0);
+    setSubjectIDUpdate(enrollment.subject?.id || 0);
+    const date = new Date(enrollment.enrollment_date);
+    setEnrollmentDateUpdate(date.toISOString().split("T")[0]);
+    setIsDisplayUpdate(true);
   };
-  const handleDelete = (classs: Class) => {
-    console.log(classs);
-    toast.warning(`Are you sure you want to delete ${classs.class_name}?`, {
+  const clearInput = () => {
+    setEnrollmentDate(new Date()); // Xóa trường tên
+    setStudentID(0); // Xóa trường email
+    setSubjectID(0);
+  };
+  const handleDelete = (enrollment: Enrollment) => {
+    console.log(enrollment);
+    toast.warning(`Are you sure you want to delete ${enrollment.id}?`, {
       action: {
         label: "Delete",
         onClick: async () => {
           try {
-            await deleteStudent(classs.id); // Call API to delete student
-            toast.success("✅ Class deleted successfully!");
-            fetchClasses(); // Refresh student list
+            await deleteEnrollment(enrollment.id); // Call API to delete student
+            toast.success("✅ enrollment deleted successfully!");
+            fetchEnrollments(); // Refresh student list
           } catch (error) {
-            toast.error("❌ Failed to delete class!");
-            console.error("Error deleting class:", error);
+            toast.error("❌ Failed to delete enrollment!");
+            console.error("Error deleting enrollment:", error);
           }
         },
       },
@@ -192,19 +224,19 @@ const ClassDashboard = () => {
     try {
       const id = Number(searchTerm);
       console.log(id);
-      const response = await getClassById(id);
+      const response = await getEnrollmentById(id);
 
       if (response) {
-        setSearchClass(response);
-        console.log("Fetched student:", response); // In ra dữ liệu sinh viên đã nhận được
+        setSearchEnrollment(response);
+        console.log("Fetched enrollment:", response); // In ra dữ liệu sinh viên đã nhận được
         setTotal(1); // Cập nhật tổng số sinh viên tìm thấy
       } else {
-        console.log("No student found with this ID.");
-        setSearchClass(undefined); // Đặt lại searchStudent nếu không tìm thấy
+        console.log("No subject found with this ID.");
+        setSearchEnrollment(undefined); // Đặt lại searchStudent nếu không tìm thấy
         setTotal(0); // Cập nhật tổng số sinh viên tìm thấy
       }
     } catch (error) {
-      console.error("Error fetching student:", error);
+      console.error("Error fetching enrollment:", error);
     } finally {
       setLoading(false);
     }
@@ -232,7 +264,7 @@ const ClassDashboard = () => {
               className="shadow-md hover:shadow-lg transition-shadow"
               onClick={(e) => setIsDisplayCreate(!isDisplayCreate)}
             >
-              Create new student
+              Create new enrollment
             </Button>
             <div className="flex flex-row gap-3">
               <Input
@@ -247,52 +279,61 @@ const ClassDashboard = () => {
               </Button>
             </div>
           </div>
-
           {isDisplayCreate ? (
             <div className="grid gap-5 px-6 py-3">
               <Input
-                placeholder="Class Name"
-                onChange={(e) => setClassName(e.target.value)}
-                className="shadow-md hover:shadow-lg transition-shadow"
-                value={className}
-                required
-              ></Input>
-              <Input
-                placeholder="Teacher ID"
+                placeholder="Student ID"
                 type="number"
-                onChange={(e) => setTeacherID(Number(e.target.value))}
+                onChange={(e) => setStudentID(Number(e.target.value))}
                 className="shadow-md hover:shadow-lg transition-shadow"
-                value={teacherID}
-              ></Input>
+                value={studentID}
+                required
+              />
+              <Input
+                placeholder="Subject ID"
+                type="number"
+                onChange={(e) => setSubjectID(Number(e.target.value))}
+                className="shadow-md hover:shadow-lg transition-shadow"
+                value={subjectID}
+                required
+              />
               <Button
                 className="shadow-md hover:shadow-lg transition-shadow"
-                onClick={createNewClass}
-                disabled={!className.trim()}
+                onClick={createNewEnrollment}
+                disabled={!studentID || !subjectID}
               >
-                Create
+                Create Enrollment
               </Button>
             </div>
-          ) : (
-            <></>
-          )}
+          ) : null}
           {isDisplayUpdate ? (
             <div className="grid gap-5 px-6 py-3">
               <Input
-                placeholder="Class Name"
-                onChange={(e) => setClassNameUpdate(e.target.value)}
-                className="shadow-md hover:shadow-lg transition-shadow"
-                value={classNameUpdate}
-              ></Input>
-              <Input
-                placeholder="Teacher ID"
                 type="number"
-                onChange={(e) => setteacherIDUpdate(Number(e.target.value))}
+                placeholder="Student ID"
+                value={studentIDUpdate}
+                onChange={(e) => setStudentIDUpdate(Number(e.target.value))}
                 className="shadow-md hover:shadow-lg transition-shadow"
-                value={teacherIDUpdate}
-              ></Input>
+              />
+              <Input
+                type="number"
+                placeholder="Subject ID"
+                value={subjectIDUpdate}
+                onChange={(e) => setSubjectIDUpdate(Number(e.target.value))}
+                className="shadow-md hover:shadow-lg transition-shadow"
+              />
+              <Input
+                type="date"
+                value={enrollmentDateUpdate}
+                onChange={(e) => setEnrollmentDateUpdate(e.target.value)}
+                className="shadow-md hover:shadow-lg transition-shadow"
+              />
               <Button
                 className="shadow-md hover:shadow-lg transition-shadow"
-                onClick={() => updateExistClasss()}
+                onClick={updateExistEnrollment}
+                disabled={
+                  !studentIDUpdate || !subjectIDUpdate || !enrollmentDateUpdate
+                }
               >
                 Update
               </Button>
@@ -300,53 +341,63 @@ const ClassDashboard = () => {
           ) : (
             <></>
           )}
-          {/*  */}
+
           <div className="px-6">
-            {searchClass ? (
+            {searchEnrollment ? (
               <Table className="px-6">
                 <TableHeader>
-                  <TableRow className="grid grid-cols-4 bg-gray-100 px-4">
+                  <TableRow className="grid grid-cols-5 bg-gray-100 px-4">
                     <TableHead className="flex items-center ">Id</TableHead>
                     <TableHead className="flex items-center ">
-                      Class name
+                      Enrollment date
                     </TableHead>
                     <TableHead className="flex items-center ">
-                      Teacher name
+                      Subject name
+                    </TableHead>
+                    <TableHead className="flex items-center ">
+                      Student name
                     </TableHead>
                     <TableHead className="w-[50px] text-center flex items-center">
                       Actions
                     </TableHead>
-                    {/* <TableHead className="w-[50px] text-center flex items-center">
-                      Actions
-                    </TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow
-                    key={searchClass.id}
-                    className="grid grid-cols-4 items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
+                    key={searchEnrollment.id}
+                    className="grid grid-cols-5 items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
                   >
                     <TableCell className="flex items-center gap-2">
                       <IdCard className="h-4 w-4 text-blue-500" />
-                      {searchClass.id}
+                      {searchEnrollment.id}
                     </TableCell>
+
                     <TableCell className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8 hover:shadow-md transition-shadow">
-                        <AvatarFallback className="bg-purple-100 text-purple-600">
-                          {searchClass.class_name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      {searchClass.class_name}
+                      <Calendar className="h-4 w-4 text-blue-500" />
+                      {new Date(
+                        searchEnrollment.enrollment_date
+                      ).toLocaleDateString()}
                     </TableCell>
 
                     <TableCell className="flex items-center gap-2">
                       <Avatar className="h-8 w-8 hover:shadow-md transition-shadow">
                         <AvatarFallback className="bg-purple-100 text-purple-600">
-                          {searchClass.teacher?.full_name?.charAt(0) || ""}
+                          {searchEnrollment.subject?.subject_name?.charAt(0) ||
+                            "S"}
                         </AvatarFallback>
                       </Avatar>
-                      {searchClass.teacher?.full_name}
+                      {searchEnrollment.subject?.subject_name || "No Subject"}
                     </TableCell>
+                    <TableCell className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8 hover:shadow-md transition-shadow">
+                        <AvatarFallback className="bg-purple-100 text-purple-600">
+                          {searchEnrollment.student?.full_name?.charAt(0) ||
+                            "S"}
+                        </AvatarFallback>
+                      </Avatar>
+                      {searchEnrollment.student?.full_name || "No Student"}
+                    </TableCell>
+
                     {/* Nút Actions */}
                     <TableCell className="w-[50px] flex justify-center">
                       <DropdownMenu>
@@ -357,14 +408,14 @@ const ClassDashboard = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => handleUpdate(searchClass)}
+                            onClick={() => handleUpdate(searchEnrollment)}
                             className="flex flex-row"
                           >
                             <Edit className="h-4 w-4 mr-2 text-blue-500" />
                             Update
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleDelete(searchClass)}
+                            onClick={() => handleDelete(searchEnrollment)}
                             className="flex flex-row"
                           >
                             <Trash className="h-4 w-4 mr-2 text-red-500" />
@@ -384,18 +435,17 @@ const ClassDashboard = () => {
               </TableRow>
             )}
           </div>
-          {/*  */}
 
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-xl font-semibold text-gray-800 ">
-              Class List
+              Enrollment List
             </CardTitle>
 
             <Badge
               variant="secondary"
               className="h-8 px-3 bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
             >
-              Total: {classes.length}
+              Total: {enrollments.length}
             </Badge>
           </CardHeader>
 
@@ -403,13 +453,16 @@ const ClassDashboard = () => {
             <div className="rounded-lg border bg-white shadow-sm">
               <Table>
                 <TableHeader>
-                  <TableRow className="grid grid-cols-4 bg-gray-100 px-4">
+                  <TableRow className="grid grid-cols-5 bg-gray-100 px-4">
                     <TableHead className="flex items-center ">Id</TableHead>
                     <TableHead className="flex items-center ">
-                      Class name
+                      Enrollment date
                     </TableHead>
                     <TableHead className="flex items-center ">
-                      Teacher name
+                      Subject name
+                    </TableHead>
+                    <TableHead className="flex items-center ">
+                      Student name
                     </TableHead>
                     <TableHead className="w-[50px] text-center flex items-center">
                       Actions
@@ -417,29 +470,40 @@ const ClassDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {classes.length > 0 ? (
-                    classes.map((classs) => (
+                  {enrollments.length > 0 ? (
+                    enrollments.map((enrollment) => (
                       <TableRow
-                        key={classs.id}
-                        className="grid grid-cols-4 items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
+                        key={enrollment.id}
+                        className="grid grid-cols-5 items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
                       >
                         <TableCell className="flex items-center gap-2">
                           <IdCard className="h-4 w-4 text-blue-500" />
-                          {classs.id}
+                          {enrollment.id}
+                        </TableCell>
+
+                        <TableCell className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-blue-500" />
+                          {new Date(
+                            enrollment.enrollment_date
+                          ).toLocaleDateString()}
+                        </TableCell>
+
+                        <TableCell className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8 hover:shadow-md transition-shadow">
+                            <AvatarFallback className="bg-purple-100 text-purple-600">
+                              {enrollment.subject?.subject_name?.charAt(0) ||
+                                "S"}
+                            </AvatarFallback>
+                          </Avatar>
+                          {enrollment.subject?.subject_name || "No Subject"}
                         </TableCell>
                         <TableCell className="flex items-center gap-2">
                           <Avatar className="h-8 w-8 hover:shadow-md transition-shadow">
                             <AvatarFallback className="bg-purple-100 text-purple-600">
-                              {classs.class_name.charAt(0)}
+                              {enrollment.student?.full_name?.charAt(0) || "S"}
                             </AvatarFallback>
                           </Avatar>
-                          {classs.class_name}
-                        </TableCell>
-                        <TableCell className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-blue-500" />
-                          {classs.teacher
-                            ? classs.teacher.full_name
-                            : "No teacher"}
+                          {enrollment.student?.full_name || "No Student"}
                         </TableCell>
 
                         {/* Nút Actions */}
@@ -456,14 +520,14 @@ const ClassDashboard = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => handleUpdate(classs)}
+                                onClick={() => handleUpdate(enrollment)}
                                 className="flex flex-row"
                               >
                                 <Edit className="h-4 w-4 mr-2 text-blue-500" />
                                 Update
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleDelete(classs)}
+                                onClick={() => handleDelete(enrollment)}
                                 className="flex flex-row"
                               >
                                 <Trash className="h-4 w-4 mr-2 text-red-500" />
@@ -477,7 +541,7 @@ const ClassDashboard = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center">
-                        No students found
+                        No subject found
                       </TableCell>
                     </TableRow>
                   )}
@@ -496,4 +560,4 @@ const ClassDashboard = () => {
   );
 };
 
-export default ClassDashboard;
+export default EnrollmentDashboard;
