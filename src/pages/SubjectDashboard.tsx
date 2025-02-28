@@ -62,38 +62,49 @@ import {
   updateClass,
 } from "@/apis/classService";
 import Class from "@/interfaces/Class";
+import Subject from "@/interfaces/Subject";
+import {
+  createSubject,
+  deleteSubject,
+  getSubjectById,
+  getSubjects,
+  updateSubject,
+} from "@/apis/subjectService";
 
-const ClassDashboard = () => {
+const SubjectDashboard = () => {
   const [mounted, setMounted] = useState(false);
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(1);
   const itemsPerPage = 10;
 
-  const [className, setClassName] = useState("");
+  const [subjectName, setSubjectName] = useState("");
   const [teacherID, setTeacherID] = useState(0);
+  const [classID, setClassID] = useState(0);
 
-  const [idUpdate, setIdUpdate] = useState(1);
-  const [classNameUpdate, setClassNameUpdate] = useState("");
+  const [idUpdate, setIdUpdate] = useState(0);
+  const [subjectNameUpdate, setSubjectNameUpdate] = useState("");
   const [teacherIDUpdate, setteacherIDUpdate] = useState(0);
+  const [classIDUpdate, setClassIDUpdate] = useState(0);
 
   const [isDisplayCreate, setIsDisplayCreate] = useState(false);
   const [isDisplayUpdate, setIsDisplayUpdate] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState(1);
-  const [searchClass, setSearchClass] = useState<Class>();
+  const [searchSubject, setSearchSubject] = useState<Subject>();
   useEffect(() => {
     setMounted(true);
 
-    fetchClasses();
+    fetchSubject();
   }, [currentPage]);
-  const fetchClasses = async () => {
+
+  const fetchSubject = async () => {
     try {
-      const response = await getClasses(currentPage, itemsPerPage);
+      const response = await getSubjects(currentPage, itemsPerPage);
       console.log(response.data);
-      setClasses(response.data || []);
+      setSubjects(response.data || []);
       setTotal(response.total || 0);
       setTotalPages(Math.ceil(response.total / itemsPerPage));
     } catch (error) {
@@ -102,27 +113,30 @@ const ClassDashboard = () => {
       setLoading(false);
     }
   };
-  const createNewClass = async () => {
+  const createNewSubject = async () => {
     try {
       // Validate input
-      if (!className.trim()) {
-        toast.error("Class name cannot be empty");
+      if (!subjectName.trim()) {
+        toast.error("Subject name cannot be empty");
         return;
       }
 
-      const classData = {
-        class_name: className,
+      const subjectData = {
+        subject_name: subjectName,
         teacher: {
           id: teacherID,
         },
+        class: {
+          id: classID,
+        },
       };
 
-      const response = await createClass(classData);
+      const response = await createSubject(subjectData);
       console.log("Class created successfully:", response);
       toast.success("Class created successfully!");
-      setClasses((prev) => [...prev, response]);
+      setSubjects((prev) => [...prev, response]);
       setIsDisplayCreate(false);
-      fetchClasses(); // Refresh the list
+      fetchSubject(); // Refresh the list
       clearInput();
     } catch (error: any) {
       console.error("Error creating class:", error);
@@ -137,17 +151,21 @@ const ClassDashboard = () => {
       }
     }
   };
-  const updateExistClasss = async () => {
+  const updateExistSubject = async () => {
     try {
       const updateData = {
-        class_name: classNameUpdate,
+        subject_name: subjectNameUpdate,
         teacher: {
           id: teacherIDUpdate,
         },
+        class: {
+          id: classIDUpdate,
+        },
       };
-      const response = await updateClass(idUpdate, updateData);
+      console.log("update data" + updateData);
+      const response = await updateSubject(idUpdate, updateData);
       console.log("Class updated successfully:", response);
-      fetchClasses();
+      fetchSubject();
       clearInputUpdate();
       setIsDisplayUpdate(false);
     } catch (error) {
@@ -155,34 +173,37 @@ const ClassDashboard = () => {
     }
   };
   const clearInput = () => {
-    setClassName(""); // Xóa trường tên
+    setSubjectName(""); // Xóa trường tên
     setTeacherID(0); // Xóa trường email
+    setClassID(0);
   };
   const clearInputUpdate = () => {
-    setClassNameUpdate(""); // Xóa trường tên
+    setSubjectNameUpdate(""); // Xóa trường tên
     setteacherIDUpdate(0); // Xóa trường email
+    setClassIDUpdate(0); // Xóa trường email
   };
 
-  const handleUpdate = async (classs: Class) => {
-    console.log(classs);
-    setIdUpdate(classs.id);
-    setClassNameUpdate(classs.class_name);
-    setteacherIDUpdate(classs.teacher ? classs.teacher.id : 0);
+  const handleUpdate = async (subject: Subject) => {
+    console.log(subject);
+    setIdUpdate(subject.id);
+    setSubjectNameUpdate(subject.subject_name);
+    setteacherIDUpdate(subject.teacher ? subject.teacher.id : 0);
+    setClassIDUpdate(subject.class ? subject.class.id : 0);
     setIsDisplayUpdate(!isDisplayUpdate);
   };
-  const handleDelete = (classs: Class) => {
-    console.log(classs);
-    toast.warning(`Are you sure you want to delete ${classs.class_name}?`, {
+  const handleDelete = (subject: Subject) => {
+    console.log(subject);
+    toast.warning(`Are you sure you want to delete ${subject.subject_name}?`, {
       action: {
         label: "Delete",
         onClick: async () => {
           try {
-            await deleteStudent(classs.id); // Call API to delete student
-            toast.success("✅ Class deleted successfully!");
-            fetchClasses(); // Refresh student list
+            await deleteSubject(subject.id); // Call API to delete student
+            toast.success("✅ Subject deleted successfully!");
+            fetchSubject(); // Refresh student list
           } catch (error) {
-            toast.error("❌ Failed to delete class!");
-            console.error("Error deleting class:", error);
+            toast.error("❌ Failed to delete subject!");
+            console.error("Error deleting subject:", error);
           }
         },
       },
@@ -192,19 +213,19 @@ const ClassDashboard = () => {
     try {
       const id = Number(searchTerm);
       console.log(id);
-      const response = await getClassById(id);
+      const response = await getSubjectById(id);
 
       if (response) {
-        setSearchClass(response);
-        console.log("Fetched student:", response); // In ra dữ liệu sinh viên đã nhận được
+        setSearchSubject(response);
+        console.log("Fetched subject:", response); // In ra dữ liệu sinh viên đã nhận được
         setTotal(1); // Cập nhật tổng số sinh viên tìm thấy
       } else {
-        console.log("No student found with this ID.");
-        setSearchClass(undefined); // Đặt lại searchStudent nếu không tìm thấy
+        console.log("No subject found with this ID.");
+        setSearchSubject(undefined); // Đặt lại searchStudent nếu không tìm thấy
         setTotal(0); // Cập nhật tổng số sinh viên tìm thấy
       }
     } catch (error) {
-      console.error("Error fetching student:", error);
+      console.error("Error fetching subject:", error);
     } finally {
       setLoading(false);
     }
@@ -232,7 +253,7 @@ const ClassDashboard = () => {
               className="shadow-md hover:shadow-lg transition-shadow"
               onClick={(e) => setIsDisplayCreate(!isDisplayCreate)}
             >
-              Create new student
+              Create new subject
             </Button>
             <div className="flex flex-row gap-3">
               <Input
@@ -252,10 +273,17 @@ const ClassDashboard = () => {
             <div className="grid gap-5 px-6 py-3">
               <Input
                 placeholder="Class Name"
-                onChange={(e) => setClassName(e.target.value)}
+                onChange={(e) => setSubjectName(e.target.value)}
                 className="shadow-md hover:shadow-lg transition-shadow"
-                value={className}
+                value={subjectName}
                 required
+              ></Input>
+              <Input
+                placeholder="Class ID"
+                type="number"
+                onChange={(e) => setClassID(Number(e.target.value))}
+                className="shadow-md hover:shadow-lg transition-shadow"
+                value={classID}
               ></Input>
               <Input
                 placeholder="Teacher ID"
@@ -264,10 +292,11 @@ const ClassDashboard = () => {
                 className="shadow-md hover:shadow-lg transition-shadow"
                 value={teacherID}
               ></Input>
+
               <Button
                 className="shadow-md hover:shadow-lg transition-shadow"
-                onClick={createNewClass}
-                disabled={!className.trim()}
+                onClick={createNewSubject}
+                disabled={!subjectName.trim()}
               >
                 Create
               </Button>
@@ -275,13 +304,21 @@ const ClassDashboard = () => {
           ) : (
             <></>
           )}
+          {/*  */}
           {isDisplayUpdate ? (
             <div className="grid gap-5 px-6 py-3">
               <Input
                 placeholder="Class Name"
-                onChange={(e) => setClassNameUpdate(e.target.value)}
+                onChange={(e) => setSubjectNameUpdate(e.target.value)}
                 className="shadow-md hover:shadow-lg transition-shadow"
-                value={classNameUpdate}
+                value={subjectNameUpdate}
+              ></Input>
+              <Input
+                placeholder="Class ID"
+                type="number"
+                onChange={(e) => setClassIDUpdate(Number(e.target.value))}
+                className="shadow-md hover:shadow-lg transition-shadow"
+                value={classIDUpdate}
               ></Input>
               <Input
                 placeholder="Teacher ID"
@@ -292,7 +329,7 @@ const ClassDashboard = () => {
               ></Input>
               <Button
                 className="shadow-md hover:shadow-lg transition-shadow"
-                onClick={() => updateExistClasss()}
+                onClick={() => updateExistSubject()}
               >
                 Update
               </Button>
@@ -302,11 +339,14 @@ const ClassDashboard = () => {
           )}
           {/*  */}
           <div className="px-6">
-            {searchClass ? (
+            {searchSubject ? (
               <Table className="px-6">
                 <TableHeader>
-                  <TableRow className="grid grid-cols-4 bg-gray-100 px-4">
+                  <TableRow className="grid grid-cols-5 bg-gray-100 px-4">
                     <TableHead className="flex items-center ">Id</TableHead>
+                    <TableHead className="flex items-center ">
+                      Subject name
+                    </TableHead>
                     <TableHead className="flex items-center ">
                       Class name
                     </TableHead>
@@ -316,37 +356,38 @@ const ClassDashboard = () => {
                     <TableHead className="w-[50px] text-center flex items-center">
                       Actions
                     </TableHead>
-                    {/* <TableHead className="w-[50px] text-center flex items-center">
-                      Actions
-                    </TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow
-                    key={searchClass.id}
-                    className="grid grid-cols-4 items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
+                    key={searchSubject.id}
+                    className="grid grid-cols-5 items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
                   >
                     <TableCell className="flex items-center gap-2">
                       <IdCard className="h-4 w-4 text-blue-500" />
-                      {searchClass.id}
+                      {searchSubject.id}
                     </TableCell>
                     <TableCell className="flex items-center gap-2">
                       <Avatar className="h-8 w-8 hover:shadow-md transition-shadow">
                         <AvatarFallback className="bg-purple-100 text-purple-600">
-                          {searchClass.class_name.charAt(0)}
+                          {searchSubject.subject_name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      {searchClass.class_name}
+                      {searchSubject.subject_name}
+                    </TableCell>
+                    <TableCell className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-blue-500" />
+                      {searchSubject.class
+                        ? searchSubject.class?.class_name
+                        : "No class"}
+                    </TableCell>
+                    <TableCell className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-blue-500" />
+                      {searchSubject.teacher
+                        ? searchSubject.teacher.full_name
+                        : "No class"}
                     </TableCell>
 
-                    <TableCell className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8 hover:shadow-md transition-shadow">
-                        <AvatarFallback className="bg-purple-100 text-purple-600">
-                          {searchClass.teacher?.full_name?.charAt(0) || ""}
-                        </AvatarFallback>
-                      </Avatar>
-                      {searchClass.teacher?.full_name}
-                    </TableCell>
                     {/* Nút Actions */}
                     <TableCell className="w-[50px] flex justify-center">
                       <DropdownMenu>
@@ -357,14 +398,14 @@ const ClassDashboard = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => handleUpdate(searchClass)}
+                            onClick={() => handleUpdate(searchSubject)}
                             className="flex flex-row"
                           >
                             <Edit className="h-4 w-4 mr-2 text-blue-500" />
                             Update
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleDelete(searchClass)}
+                            onClick={() => handleDelete(searchSubject)}
                             className="flex flex-row"
                           >
                             <Trash className="h-4 w-4 mr-2 text-red-500" />
@@ -384,18 +425,16 @@ const ClassDashboard = () => {
               </TableRow>
             )}
           </div>
-          {/*  */}
-
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-xl font-semibold text-gray-800 ">
-              Class List
+              Subject List
             </CardTitle>
 
             <Badge
               variant="secondary"
               className="h-8 px-3 bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
             >
-              Total: {classes.length}
+              Total: {subjects.length}
             </Badge>
           </CardHeader>
 
@@ -403,8 +442,11 @@ const ClassDashboard = () => {
             <div className="rounded-lg border bg-white shadow-sm">
               <Table>
                 <TableHeader>
-                  <TableRow className="grid grid-cols-4 bg-gray-100 px-4">
+                  <TableRow className="grid grid-cols-5 bg-gray-100 px-4">
                     <TableHead className="flex items-center ">Id</TableHead>
+                    <TableHead className="flex items-center ">
+                      Subject name
+                    </TableHead>
                     <TableHead className="flex items-center ">
                       Class name
                     </TableHead>
@@ -417,29 +459,35 @@ const ClassDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {classes.length > 0 ? (
-                    classes.map((classs) => (
+                  {subjects.length > 0 ? (
+                    subjects.map((subject) => (
                       <TableRow
-                        key={classs.id}
-                        className="grid grid-cols-4 items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
+                        key={subject.id}
+                        className="grid grid-cols-5 items-center gap-2 px-4 hover:bg-gray-50 transition-colors"
                       >
                         <TableCell className="flex items-center gap-2">
                           <IdCard className="h-4 w-4 text-blue-500" />
-                          {classs.id}
+                          {subject.id}
                         </TableCell>
                         <TableCell className="flex items-center gap-2">
                           <Avatar className="h-8 w-8 hover:shadow-md transition-shadow">
                             <AvatarFallback className="bg-purple-100 text-purple-600">
-                              {classs.class_name.charAt(0)}
+                              {subject.subject_name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          {classs.class_name}
+                          {subject.subject_name}
                         </TableCell>
                         <TableCell className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-blue-500" />
-                          {classs.teacher
-                            ? classs.teacher.full_name
-                            : "No teacher"}
+                          {subject.class
+                            ? subject.class?.class_name
+                            : "No class"}
+                        </TableCell>
+                        <TableCell className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-blue-500" />
+                          {subject.teacher
+                            ? subject.teacher.full_name
+                            : "No class"}
                         </TableCell>
 
                         {/* Nút Actions */}
@@ -456,14 +504,14 @@ const ClassDashboard = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => handleUpdate(classs)}
+                                onClick={() => handleUpdate(subject)}
                                 className="flex flex-row"
                               >
                                 <Edit className="h-4 w-4 mr-2 text-blue-500" />
                                 Update
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleDelete(classs)}
+                                onClick={() => handleDelete(subject)}
                                 className="flex flex-row"
                               >
                                 <Trash className="h-4 w-4 mr-2 text-red-500" />
@@ -477,7 +525,7 @@ const ClassDashboard = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center">
-                        No students found
+                        No subject found
                       </TableCell>
                     </TableRow>
                   )}
@@ -496,4 +544,4 @@ const ClassDashboard = () => {
   );
 };
 
-export default ClassDashboard;
+export default SubjectDashboard;
