@@ -34,6 +34,9 @@ const MainDashboard = () => {
   //   if (loading) {
   //     return <div>Loading...</div>; // You can replace this with a loading spinner
   //   }
+  useEffect(() => {
+    fetch("/api/start-consumer").catch(console.error);
+  }, [1]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
