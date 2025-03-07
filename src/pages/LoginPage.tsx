@@ -24,10 +24,9 @@ const LoginPageComponent = () => {
       const response = await login({ email, password });
 
       if (response.accessToken) {
-        // Lưu token vào localStorage hoặc cookies
-        localStorage.setItem("token", response.accessToken);
+        document.cookie = `token=${response.accessToken}; path=/;`;
         toast.success("Login successful!");
-        // router.push("/dashboard"); // hoặc trang chính sau khi đăng nhập
+        router.push("/");
       }
     } catch (error) {
       console.error("Login error:", error);

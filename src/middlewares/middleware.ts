@@ -8,10 +8,13 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith("/(auth)")) {
     return NextResponse.next();
   }
-  // Logic bảo vệ cho các route khác
-  const isAuthenticated = true; // Giả sử isAuthenticated là một biến đã được định nghĩa trước
-  if (!isAuthenticated) {
-    return NextResponse.redirect("/login");
+
+  // Kiểm tra xem người dùng đã đăng nhập chưa
+  const token = request.cookies.get("token"); // Hoặc kiểm tra localStorage nếu cần
+
+  if (!token) {
+    // Nếu không có token, chuyển hướng đến trang đăng nhập
+    return NextResponse.redirect(new URL("/(auth)/login", request.url));
   }
 
   return NextResponse.next();
