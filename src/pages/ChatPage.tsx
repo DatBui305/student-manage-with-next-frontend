@@ -13,6 +13,8 @@ type ChatStorage = {
 export interface Message {
   id: number;
   content: string;
+  sender: number;
+  receiver: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -49,6 +51,7 @@ export default function ChatPage() {
         `http://localhost:3000/chat-room/room-chat/${selectedRoom}`
       );
       setChatRoomSelect(response.data);
+      console.log(response.data);
     } catch (error) {
       console.error("Failed to fetch room data", error);
     }
